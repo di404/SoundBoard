@@ -3,6 +3,7 @@ const qiniu = require('qiniu');
 const path = require('path');
 const cors = require('cors');
 const mongoose = require('mongoose');
+const http = require('http'); // 引入 http 模块用于代理
 require('dotenv').config();
 
 const app = express();
@@ -66,21 +67,37 @@ app.get('/api/sounds', async (req, res) => {
 app.post('/api/sounds', async (req, res) => {
     try {
         const { name, url, color } = req.body;
-        // 强制保存为 HTTPS
-        let safeUrl = url;
-        if (safeUrl && safeUrl.startsWith('http://')) {
-            safeUrl = safeUrl.replace('http://', 'https://');
-        } else if (safeUrl && !safeUrl.startsWith('http')) {
-             // 如果没带协议头，默认加上 https
-            safeUrl = `https://${safeUrl}`;
-        }
-        
-        const newSound = new Sound({ name, url: safeUrl, color });
+        // 撤销强制 HTTPS，保持原样保存，由前端决定是否走代理
+        const newSound = new Sound({ name, url, color });
         await newSound.save();
         res.json(newSound);
     } catch (err) {
         res.status(500).json({ error: 'Failed to save sound' });
     }
+});
+
+// API: 代理接口 (解决 HTTPS 无法播放 HTTP 音频的问题)
+app.get('/api/proxy', (req, res) => {
+    const targetUrl = req.query.url;
+    if (!targetUrl) return res.status(400).send('Missing URL');
+
+    // 简单验证：只允许 http 协议
+    if (!targetUrl.startsWith('http://')) {
+        return res.redirect(targetUrl); // 如果已经是 https，直接跳转
+    }
+
+    http.get(targetUrl, (response) => {
+        // 透传 Content-Type (如 audio/mpeg)
+        res.setHeader('Content-Type', response.headers['content-type'] || 'audio/mpeg');
+        // 设置缓存，避免每次都消耗流量 (缓存 1 年)
+        res.setHeader('Cache-Control', 'public, max-age=31536000');
+        
+        // 将七牛云的数据流直接管道转发给前端
+        response.pipe(res);
+    }).on('error', (err) => {
+        console.error('Proxy error:', err);
+        res.status(500).send('Proxy Error');
+    });
 });
 
 // API: 修改音效 (需要密码)

@@ -411,14 +411,15 @@
                 existingAudio.currentTime = 0;
             }
 
-            // 强制将 http 替换为 https 以解决 Mixed Content 问题
-            // 只要七牛云域名支持 SSL (clouddn.com 默认支持)，这就能完美解决问题
-            let secureUrl = sound.url;
-            if (secureUrl && secureUrl.startsWith('http://')) {
-                secureUrl = secureUrl.replace('http://', 'https://');
+            // 解决 Mixed Content 问题：
+            // 如果当前页面是 HTTPS，而音频链接是 HTTP，则通过后端代理转发
+            let playUrl = sound.url;
+            if (window.location.protocol === 'https:' && playUrl && playUrl.startsWith('http://')) {
+                // 使用 encodeURIComponent 确保 URL 特殊字符被正确编码
+                playUrl = `/api/proxy?url=${encodeURIComponent(playUrl)}`;
             }
 
-            const audio = new Audio(secureUrl);
+            const audio = new Audio(playUrl);
             audioMap.set(soundId, audio);
             activeAudios.push(audio);
 
@@ -426,7 +427,7 @@
                 console.error("Playback failed:", e);
                 // 如果是格式不支持，可能是链接本身坏了
                 if (e.name === 'NotSupportedError') {
-                    alert('无法播放：音频链接无效或格式不支持');
+                    // console.log("Trying fallback..."); 
                 }
             });
 
