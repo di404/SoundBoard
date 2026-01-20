@@ -314,17 +314,8 @@
     </footer>
 
     <script>
-        // Initial Data
-        const soundList = [
-            { id: 1, name: "Vine Boom", url: "https://www.myinstants.com/media/sounds/vine-boom.mp3", color: "#e74c3c", icon: "fa-bomb" },
-            { id: 2, name: "Bruh", url: "https://www.myinstants.com/media/sounds/movie_1.mp3", color: "#3498db", icon: "fa-face-dizzy" },
-            { id: 3, name: "Airhorn", url: "https://www.myinstants.com/media/sounds/airhorn.mp3", color: "#f1c40f", icon: "fa-bullhorn" },
-            { id: 4, name: "Cricket", url: "https://www.myinstants.com/media/sounds/cricket_1.mp3", color: "#2ecc71", icon: "fa-locust" },
-            { id: 5, name: "Sad Violin", url: "https://www.myinstants.com/media/sounds/sad-violin.mp3", color: "#9b59b6", icon: "fa-music" },
-            { id: 6, name: "Wow", url: "https://www.myinstants.com/media/sounds/anime-wow-sound-effect.mp3", color: "#e67e22", icon: "fa-star" }
-        ];
-
         // State
+        let soundList = []; // Now loaded from DB
         const activeAudios = []; 
         const audioMap = new Map();
         
@@ -344,13 +335,33 @@
 
         // --- Core Functions ---
 
+        // NEW: Fetch all sounds from DB
+        async function loadSounds() {
+            try {
+                grid.innerHTML = '<div class="no-results">正在加载音效...</div>';
+                const response = await fetch('/api/sounds');
+                const data = await response.json();
+                soundList = data;
+                
+                // If DB is empty, provide some default ones (optional)
+                if (soundList.length === 0) {
+                    grid.innerHTML = '<div class="no-results">还没有音效，快去上传一个吧！</div>';
+                } else {
+                    renderButtons();
+                }
+            } catch (err) {
+                console.error("Failed to load sounds:", err);
+                grid.innerHTML = '<div class="no-results">加载失败，请刷新页面重试</div>';
+            }
+        }
+
         function renderButtons(filterText = '') {
             grid.innerHTML = '';
             const filteredSounds = soundList.filter(sound => 
                 sound.name.toLowerCase().includes(filterText.toLowerCase())
             );
 
-            if (filteredSounds.length === 0) {
+            if (filteredSounds.length === 0 && soundList.length > 0) {
                 grid.innerHTML = '<div class="no-results">没有找到相关音效</div>';
                 return;
             }
@@ -359,7 +370,7 @@
                 const btn = document.createElement('button');
                 btn.className = 'sound-btn';
                 btn.style.backgroundColor = sound.color;
-                btn.dataset.id = sound.id;
+                btn.dataset.id = sound._id || sound.id; // Use MongoDB _id
                 btn.onclick = () => playSound(sound);
                 
                 const icon = document.createElement('i');
@@ -376,20 +387,21 @@
         }
 
         function playSound(sound) {
-            const btn = document.querySelector(`button[data-id="${sound.id}"]`);
+            const soundId = sound._id || sound.id;
+            const btn = document.querySelector(`button[data-id="${soundId}"]`);
             if (btn) {
                 btn.classList.add('playing');
                 setTimeout(() => btn.classList.remove('playing'), 150);
             }
 
-            if (audioMap.has(sound.id)) {
-                const existingAudio = audioMap.get(sound.id);
+            if (audioMap.has(soundId)) {
+                const existingAudio = audioMap.get(soundId);
                 existingAudio.pause();
                 existingAudio.currentTime = 0;
             }
 
             const audio = new Audio(sound.url);
-            audioMap.set(sound.id, audio);
+            audioMap.set(soundId, audio);
             activeAudios.push(audio);
 
             audio.play().catch(e => console.error("Playback failed:", e));
@@ -397,7 +409,7 @@
             audio.onended = () => {
                 const index = activeAudios.indexOf(audio);
                 if (index > -1) activeAudios.splice(index, 1);
-                if (audioMap.get(sound.id) === audio) audioMap.delete(sound.id);
+                if (audioMap.get(soundId) === audio) audioMap.delete(soundId);
             };
         }
 
@@ -440,16 +452,12 @@
                 if (!response.ok) throw new Error("无法连接到服务器");
                 const data = await response.json();
                 
-                if (!data.token) {
-                    throw new Error("服务器未配置七牛云 Key");
-                }
+                if (!data.token) throw new Error("服务器未配置七牛云 Key");
 
                 // 2. 使用七牛 SDK 上传
                 uploadStatus.innerText = "🚀 正在上传到云端...";
-                
-                // 构造唯一文件名: timestamp_filename
                 const key = `${Date.now()}_${file.name}`;
-                const config = { useCdnDomain: true, region: null }; // auto detect region
+                const config = { useCdnDomain: true, region: null };
                 const putExtra = { fname: file.name, params: {}, mimeType: null };
                 
                 const observable = qiniu.upload(file, key, data.token, putExtra, config);
@@ -460,27 +468,32 @@
                         uploadStatus.innerText = `🚀 上传中... ${percent}%`;
                     },
                     error: (err) => {
-                        console.error(err);
                         uploadStatus.innerText = `❌ 上传失败: ${err.message}`;
                     },
-                    complete: (res) => {
-                        // 3. 上传成功，构建 URL
+                    complete: async (res) => {
                         const audioUrl = `${data.domain}/${res.key}`;
                         
-                        // 4. 添加到本地列表 (注意：如果没有数据库，刷新后会消失)
-                        const newSound = {
-                            id: Date.now(),
-                            name: name,
-                            url: audioUrl,
-                            color: getRandomColor(),
-                            icon: 'fa-cloud-music'
-                        };
-                        
-                        soundList.unshift(newSound); // Add to beginning
-                        renderButtons(searchInput.value);
-                        
-                        uploadStatus.innerText = "✅ 上传成功!";
-                        setTimeout(closeModal, 1000);
+                        // 3. NEW: Save to MongoDB
+                        uploadStatus.innerText = "💾 正在保存到数据库...";
+                        const saveResponse = await fetch('/api/sounds', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                name: name,
+                                url: audioUrl,
+                                color: getRandomColor()
+                            })
+                        });
+
+                        if (saveResponse.ok) {
+                            const savedSound = await saveResponse.json();
+                            soundList.unshift(savedSound);
+                            renderButtons(searchInput.value);
+                            uploadStatus.innerText = "✅ 上传并保存成功!";
+                            setTimeout(closeModal, 1000);
+                        } else {
+                            throw new Error("保存到数据库失败");
+                        }
                     }
                 });
 
@@ -502,13 +515,12 @@
         cancelUploadBtn.addEventListener('click', closeModal);
         confirmUploadBtn.addEventListener('click', handleUpload);
 
-        // Close modal if clicking outside
         uploadModal.addEventListener('click', (e) => {
             if (e.target === uploadModal) closeModal();
         });
 
-        // Initial Render
-        renderButtons();
+        // Initial Load
+        loadSounds();
     </script>
 </body>
 </html>
