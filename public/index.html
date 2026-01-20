@@ -160,15 +160,17 @@
             top: 0; left: 0; right: 0; bottom: 0;
             border-radius: inherit;
             /* 
-                Visual Effect: 
-                - At 0% progress: transparent 0% (none), rgba 0 (all dark).
-                - At 100% progress: transparent 100% (all revealed), rgba 0 (none).
+               Fix: explicit stops for clean cut 
+               0% -> var(--progress): Transparent (Reveals Button Color)
+               var(--progress) -> 100%: Dark Overlay (Hides Button Color)
             */
             background: conic-gradient(
+                transparent 0%, 
                 transparent var(--progress, 100%), 
-                rgba(0,0,0,0.5) 0
+                rgba(0,0,0,0.5) var(--progress, 100%), 
+                rgba(0,0,0,0.5) 100%
             );
-            z-index: 1; /* Above background color, below text */
+            z-index: 1; 
             pointer-events: none;
         }
 
