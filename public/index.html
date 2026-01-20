@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Instant Fun - 音效板</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- 引入七牛云 JS SDK -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qiniu-js/3.4.1/qiniu.min.js"></script>
+    <style>
+        :root {
+            --bg-color: #121212;
+            --text-color: #ffffff;
+            --card-bg: #1e1e1e;
+            --input-bg: #2d2d2d;
+            --accent-color: #ff5252;
+            --success-color: #2ecc71;
+            --transition-speed: 0.1s;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* Header Styles */
+        header {
+            width: 100%;
+            max-width: 1200px;
+            padding: 20px;
+            position: sticky;
+            top: 0;
+            background-color: rgba(18, 18, 18, 0.95);
+            backdrop-filter: blur(10px);
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            border-bottom: 1px solid #333;
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            color: var(--text-color);
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            width: 100%;
+            max-width: 600px;
+            justify-content: center;
+        }
+
+        .search-container {
+            position: relative;
+            flex-grow: 1;
+        }
+
+        .search-container i {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #888;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 12px 20px 12px 45px;
+            border-radius: 25px;
+            border: none;
+            background-color: var(--input-bg);
+            color: white;
+            font-size: 1rem;
+            outline: none;
+            transition: box-shadow 0.3s ease;
+        }
+
+        input[type="text"]:focus {
+            box-shadow: 0 0 0 2px var(--accent-color);
+        }
+
+        .btn {
+            padding: 0 20px;
+            border-radius: 25px;
+            border: none;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: opacity 0.2s, transform 0.1s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            white-space: nowrap;
+        }
+
+        .btn:hover { opacity: 0.9; }
+        .btn:active { transform: scale(0.95); }
+
+        .stop-btn { background-color: var(--accent-color); }
+        .upload-btn { background-color: var(--success-color); }
+
+        /* Grid Styles */
+        main {
+            width: 100%;
+            max-width: 1200px;
+            padding: 20px;
+            flex-grow: 1;
+        }
+
+        .sound-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 20px;
+            justify-items: center;
+        }
+
+        /* Button Styles */
+        .sound-btn {
+            width: 140px;
+            height: 140px;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 10px;
+            transition: transform var(--transition-speed), filter 0.2s;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .sound-btn:hover {
+            filter: brightness(1.1);
+            transform: translateY(-2px);
+        }
+
+        .sound-btn:active, .sound-btn.playing {
+            transform: scale(0.95) translateY(0);
+            filter: brightness(0.9);
+        }
+
+        .sound-btn i {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            color: rgba(255, 255, 255, 0.9);
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .sound-name {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: white;
+            text-align: center;
+            word-wrap: break-word;
+            width: 100%;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.4);
+            pointer-events: none;
+        }
+
+        .no-results {
+            grid-column: 1 / -1;
+            text-align: center;
+            color: #888;
+            margin-top: 50px;
+            font-size: 1.2rem;
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .modal {
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+        }
+
+        .modal h2 { margin-bottom: 20px; color: white; }
+        
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; color: #ccc; }
+        .form-group input {
+            width: 100%;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #333;
+            background: var(--input-bg);
+            color: white;
+        }
+        
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .btn-cancel { background: #555; }
+        .btn-submit { background: var(--success-color); }
+
+        #uploadStatus {
+            margin-top: 10px;
+            font-size: 0.9rem;
+            color: #ccc;
+        }
+
+        /* Footer */
+        footer {
+            padding: 20px;
+            color: #666;
+            font-size: 0.8rem;
+            text-align: center;
+        }
+
+        @media (max-width: 600px) {
+            .sound-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 15px;
+            }
+            .sound-btn { width: 100%; height: 120px; }
+            h1 { font-size: 1.5rem; }
+            header { padding: 15px; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Instant Fun</h1>
+        <div class="controls">
+            <div class="search-container">
+                <i class="fas fa-search"></i>
+                <input type="text" id="searchInput" placeholder="搜索音效...">
+            </div>
+            <button class="btn upload-btn" id="openUploadBtn">
+                <i class="fas fa-cloud-upload-alt"></i> 上传
+            </button>
+            <button class="btn stop-btn" id="stopAllBtn">
+                <i class="fas fa-stop"></i> 停止
+            </button>
+        </div>
+    </header>
+
+    <main>
+        <div class="sound-grid" id="soundGrid">
+            <!-- Buttons injected here -->
+        </div>
+    </main>
+
+    <!-- Upload Modal -->
+    <div class="modal-overlay" id="uploadModal">
+        <div class="modal">
+            <h2>上传新音效</h2>
+            <div class="form-group">
+                <label>音效名称</label>
+                <input type="text" id="uploadName" placeholder="例如: 此时一位靓仔路过">
+            </div>
+            <div class="form-group">
+                <label>选择 MP3 文件</label>
+                <input type="file" id="uploadFile" accept="audio/mp3,audio/wav">
+            </div>
+            <div id="uploadStatus"></div>
+            <div class="modal-actions">
+                <button class="btn btn-cancel" id="cancelUpload">取消</button>
+                <button class="btn btn-submit" id="confirmUpload">开始上传</button>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>Built for Instant Fun • Pure HTML/CSS/JS + Node.js</p>
+    </footer>
+
+    <script>
+        // Initial Data
+        const soundList = [
+            { id: 1, name: "Vine Boom", url: "https://www.myinstants.com/media/sounds/vine-boom.mp3", color: "#e74c3c", icon: "fa-bomb" },
+            { id: 2, name: "Bruh", url: "https://www.myinstants.com/media/sounds/movie_1.mp3", color: "#3498db", icon: "fa-face-dizzy" },
+            { id: 3, name: "Airhorn", url: "https://www.myinstants.com/media/sounds/airhorn.mp3", color: "#f1c40f", icon: "fa-bullhorn" },
+            { id: 4, name: "Cricket", url: "https://www.myinstants.com/media/sounds/cricket_1.mp3", color: "#2ecc71", icon: "fa-locust" },
+            { id: 5, name: "Sad Violin", url: "https://www.myinstants.com/media/sounds/sad-violin.mp3", color: "#9b59b6", icon: "fa-music" },
+            { id: 6, name: "Wow", url: "https://www.myinstants.com/media/sounds/anime-wow-sound-effect.mp3", color: "#e67e22", icon: "fa-star" }
+        ];
+
+        // State
+        const activeAudios = []; 
+        const audioMap = new Map();
+        
+        // DOM Elements
+        const grid = document.getElementById('soundGrid');
+        const searchInput = document.getElementById('searchInput');
+        const stopAllBtn = document.getElementById('stopAllBtn');
+        
+        // Modal Elements
+        const uploadModal = document.getElementById('uploadModal');
+        const openUploadBtn = document.getElementById('openUploadBtn');
+        const cancelUploadBtn = document.getElementById('cancelUpload');
+        const confirmUploadBtn = document.getElementById('confirmUpload');
+        const uploadNameInput = document.getElementById('uploadName');
+        const uploadFileInput = document.getElementById('uploadFile');
+        const uploadStatus = document.getElementById('uploadStatus');
+
+        // --- Core Functions ---
+
+        function renderButtons(filterText = '') {
+            grid.innerHTML = '';
+            const filteredSounds = soundList.filter(sound => 
+                sound.name.toLowerCase().includes(filterText.toLowerCase())
+            );
+
+            if (filteredSounds.length === 0) {
+                grid.innerHTML = '<div class="no-results">没有找到相关音效</div>';
+                return;
+            }
+
+            filteredSounds.forEach(sound => {
+                const btn = document.createElement('button');
+                btn.className = 'sound-btn';
+                btn.style.backgroundColor = sound.color;
+                btn.dataset.id = sound.id;
+                btn.onclick = () => playSound(sound);
+                
+                const icon = document.createElement('i');
+                icon.className = `fas ${sound.icon || 'fa-music'}`;
+                
+                const span = document.createElement('span');
+                span.className = 'sound-name';
+                span.innerText = sound.name;
+
+                btn.appendChild(icon);
+                btn.appendChild(span);
+                grid.appendChild(btn);
+            });
+        }
+
+        function playSound(sound) {
+            const btn = document.querySelector(`button[data-id="${sound.id}"]`);
+            if (btn) {
+                btn.classList.add('playing');
+                setTimeout(() => btn.classList.remove('playing'), 150);
+            }
+
+            if (audioMap.has(sound.id)) {
+                const existingAudio = audioMap.get(sound.id);
+                existingAudio.pause();
+                existingAudio.currentTime = 0;
+            }
+
+            const audio = new Audio(sound.url);
+            audioMap.set(sound.id, audio);
+            activeAudios.push(audio);
+
+            audio.play().catch(e => console.error("Playback failed:", e));
+
+            audio.onended = () => {
+                const index = activeAudios.indexOf(audio);
+                if (index > -1) activeAudios.splice(index, 1);
+                if (audioMap.get(sound.id) === audio) audioMap.delete(sound.id);
+            };
+        }
+
+        function stopAllSounds() {
+            activeAudios.forEach(audio => {
+                audio.pause();
+                audio.currentTime = 0;
+            });
+            activeAudios.length = 0;
+            audioMap.clear();
+        }
+
+        // --- Upload Logic ---
+
+        function openModal() {
+            uploadModal.classList.add('active');
+            uploadStatus.innerText = "";
+            uploadNameInput.value = "";
+            uploadFileInput.value = "";
+        }
+
+        function closeModal() {
+            uploadModal.classList.remove('active');
+        }
+
+        async function handleUpload() {
+            const file = uploadFileInput.files[0];
+            const name = uploadNameInput.value.trim();
+
+            if (!file || !name) {
+                uploadStatus.innerText = "❌ 请填写名称并选择文件";
+                return;
+            }
+
+            uploadStatus.innerText = "⏳ 正在获取上传凭证...";
+
+            try {
+                // 1. 获取 Token
+                const response = await fetch('/api/upload-token');
+                if (!response.ok) throw new Error("无法连接到服务器");
+                const data = await response.json();
+                
+                if (!data.token) {
+                    throw new Error("服务器未配置七牛云 Key");
+                }
+
+                // 2. 使用七牛 SDK 上传
+                uploadStatus.innerText = "🚀 正在上传到云端...";
+                
+                // 构造唯一文件名: timestamp_filename
+                const key = `${Date.now()}_${file.name}`;
+                const config = { useCdnDomain: true, region: null }; // auto detect region
+                const putExtra = { fname: file.name, params: {}, mimeType: null };
+                
+                const observable = qiniu.upload(file, key, data.token, putExtra, config);
+
+                observable.subscribe({
+                    next: (res) => {
+                        const percent = Math.floor(res.total.percent);
+                        uploadStatus.innerText = `🚀 上传中... ${percent}%`;
+                    },
+                    error: (err) => {
+                        console.error(err);
+                        uploadStatus.innerText = `❌ 上传失败: ${err.message}`;
+                    },
+                    complete: (res) => {
+                        // 3. 上传成功，构建 URL
+                        const audioUrl = `${data.domain}/${res.key}`;
+                        
+                        // 4. 添加到本地列表 (注意：如果没有数据库，刷新后会消失)
+                        const newSound = {
+                            id: Date.now(),
+                            name: name,
+                            url: audioUrl,
+                            color: getRandomColor(),
+                            icon: 'fa-cloud-music'
+                        };
+                        
+                        soundList.unshift(newSound); // Add to beginning
+                        renderButtons(searchInput.value);
+                        
+                        uploadStatus.innerText = "✅ 上传成功!";
+                        setTimeout(closeModal, 1000);
+                    }
+                });
+
+            } catch (err) {
+                console.error(err);
+                uploadStatus.innerText = `❌ 错误: ${err.message}`;
+            }
+        }
+
+        function getRandomColor() {
+            const colors = ['#e74c3c', '#3498db', '#f1c40f', '#2ecc71', '#9b59b6', '#e67e22', '#1abc9c'];
+            return colors[Math.floor(Math.random() * colors.length)];
+        }
+
+        // Event Listeners
+        searchInput.addEventListener('input', (e) => renderButtons(e.target.value));
+        stopAllBtn.addEventListener('click', stopAllSounds);
+        openUploadBtn.addEventListener('click', openModal);
+        cancelUploadBtn.addEventListener('click', closeModal);
+        confirmUploadBtn.addEventListener('click', handleUpload);
+
+        // Close modal if clicking outside
+        uploadModal.addEventListener('click', (e) => {
+            if (e.target === uploadModal) closeModal();
+        });
+
+        // Initial Render
+        renderButtons();
+    </script>
+</body>
+</html>
