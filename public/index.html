@@ -148,6 +148,28 @@
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
             user-select: none;
             -webkit-tap-highlight-color: transparent;
+            /* Changed: use css var for color */
+            background-color: var(--btn-color);
+            z-index: 1;
+        }
+        
+        /* 360 Progress Overlay */
+        .sound-btn::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            border-radius: inherit;
+            /* 
+                Visual Effect: 
+                - At 0% progress: transparent 0% (none), rgba 0 (all dark).
+                - At 100% progress: transparent 100% (all revealed), rgba 0 (none).
+            */
+            background: conic-gradient(
+                transparent var(--progress, 100%), 
+                rgba(0,0,0,0.5) 0
+            );
+            z-index: 1; /* Above background color, below text */
+            pointer-events: none;
         }
 
         .sound-btn:hover {
@@ -158,6 +180,12 @@
         .sound-btn:active, .sound-btn.playing {
             transform: scale(0.95) translateY(0);
             filter: brightness(0.9);
+        }
+
+        /* Ensure Text/Icon is above overlay */
+        .sound-btn i, .sound-btn span {
+            position: relative;
+            z-index: 2; 
         }
 
         .sound-btn i {
@@ -318,6 +346,7 @@
         let soundList = []; // Now loaded from DB
         const activeAudios = []; 
         const audioMap = new Map();
+        const rafMap = new Map(); // Store RAF IDs to cancel them
         
         // DOM Elements
         const grid = document.getElementById('soundGrid');
@@ -380,7 +409,8 @@
             filteredSounds.forEach(sound => {
                 const btn = document.createElement('button');
                 btn.className = 'sound-btn';
-                btn.style.backgroundColor = sound.color;
+                // Use CSS Variable for background color
+                btn.style.setProperty('--btn-color', sound.color);
                 btn.dataset.id = sound._id || sound.id; // Use MongoDB _id
                 btn.onclick = () => playSound(sound);
                 
@@ -400,22 +430,29 @@
         function playSound(sound) {
             const soundId = sound._id || sound.id;
             const btn = document.querySelector(`button[data-id="${soundId}"]`);
-            if (btn) {
-                btn.classList.add('playing');
-                setTimeout(() => btn.classList.remove('playing'), 150);
-            }
-
+            
+            // Cleanup existing audio and RAF for this button
             if (audioMap.has(soundId)) {
                 const existingAudio = audioMap.get(soundId);
                 existingAudio.pause();
                 existingAudio.currentTime = 0;
             }
+            if (rafMap.has(soundId)) {
+                cancelAnimationFrame(rafMap.get(soundId));
+                rafMap.delete(soundId);
+            }
+            
+            // Visual Reset
+            if (btn) {
+                btn.classList.add('playing');
+                setTimeout(() => btn.classList.remove('playing'), 150);
+                // Reset progress immediately to 0 (Dark)
+                btn.style.setProperty('--progress', '0%');
+            }
 
-            // 解决 Mixed Content 问题：
-            // 如果当前页面是 HTTPS，而音频链接是 HTTP，则通过后端代理转发
+            // 解决 Mixed Content 问题
             let playUrl = sound.url;
             if (window.location.protocol === 'https:' && playUrl && playUrl.startsWith('http://')) {
-                // 使用 encodeURIComponent 确保 URL 特殊字符被正确编码
                 playUrl = `/api/proxy?url=${encodeURIComponent(playUrl)}`;
             }
 
@@ -425,16 +462,34 @@
 
             audio.play().catch(e => {
                 console.error("Playback failed:", e);
-                // 如果是格式不支持，可能是链接本身坏了
-                if (e.name === 'NotSupportedError') {
-                    // console.log("Trying fallback..."); 
-                }
+                // Reset visual on error
+                if(btn) btn.style.setProperty('--progress', '100%');
             });
+
+            // Progress Loop
+            const updateProgress = () => {
+                if (!audio.paused && !audio.ended && audio.duration > 0) {
+                    const percent = (audio.currentTime / audio.duration) * 100;
+                    if (btn) btn.style.setProperty('--progress', `${percent}%`);
+                    rafMap.set(soundId, requestAnimationFrame(updateProgress));
+                }
+            };
+            rafMap.set(soundId, requestAnimationFrame(updateProgress));
 
             audio.onended = () => {
                 const index = activeAudios.indexOf(audio);
                 if (index > -1) activeAudios.splice(index, 1);
                 if (audioMap.get(soundId) === audio) audioMap.delete(soundId);
+                
+                // Reset Visuals to 100% (Full Color)
+                if (rafMap.has(soundId)) cancelAnimationFrame(rafMap.get(soundId));
+                if (btn) btn.style.setProperty('--progress', '100%');
+            };
+
+            // Handle manual pause or other stops
+            audio.onpause = () => {
+                if (rafMap.has(soundId)) cancelAnimationFrame(rafMap.get(soundId));
+                // We don't reset progress here necessarily, but for "Stop All" we do
             };
         }
 
@@ -445,6 +500,14 @@
             });
             activeAudios.length = 0;
             audioMap.clear();
+            
+            // Cancel all animations and reset buttons
+            rafMap.forEach(rafId => cancelAnimationFrame(rafId));
+            rafMap.clear();
+            
+            document.querySelectorAll('.sound-btn').forEach(btn => {
+                btn.style.setProperty('--progress', '100%');
+            });
         }
 
         // --- Upload Logic ---
