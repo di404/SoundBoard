@@ -38,11 +38,18 @@ const domain = process.env.QINIU_DOMAIN;
 
 // API: 获取所有音效
 app.get('/api/sounds', async (req, res) => {
+    // 检查数据库连接状态 (1 = connected)
+    if (mongoose.connection.readyState !== 1) {
+        console.error("MongoDB not connected. Current state:", mongoose.connection.readyState);
+        return res.status(503).json({ error: 'Database not connected' });
+    }
+
     try {
         const sounds = await Sound.find().sort({ createdAt: -1 });
         res.json(sounds);
     } catch (err) {
-        res.status(500).json({ error: 'Failed to fetch sounds' });
+        console.error("Error fetching sounds:", err);
+        res.status(500).json({ error: 'Failed to fetch sounds', details: err.message });
     }
 });
 

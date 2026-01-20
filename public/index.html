@@ -340,18 +340,29 @@
             try {
                 grid.innerHTML = '<div class="no-results">正在加载音效...</div>';
                 const response = await fetch('/api/sounds');
-                const data = await response.json();
-                soundList = data;
                 
-                // If DB is empty, provide some default ones (optional)
-                if (soundList.length === 0) {
-                    grid.innerHTML = '<div class="no-results">还没有音效，快去上传一个吧！</div>';
-                } else {
-                    renderButtons();
+                if (!response.ok) {
+                    throw new Error(`Server Error: ${response.status}`);
                 }
+
+                const data = await response.json();
+                
+                // Safety check: ensure data is an array
+                if (Array.isArray(data)) {
+                    soundList = data;
+                    if (soundList.length === 0) {
+                        grid.innerHTML = '<div class="no-results">还没有音效，快去上传一个吧！</div>';
+                    } else {
+                        renderButtons();
+                    }
+                } else {
+                    console.error("Received invalid data:", data);
+                    grid.innerHTML = '<div class="no-results">数据格式错误，请检查控制台</div>';
+                }
+
             } catch (err) {
                 console.error("Failed to load sounds:", err);
-                grid.innerHTML = '<div class="no-results">加载失败，请刷新页面重试</div>';
+                grid.innerHTML = `<div class="no-results">加载失败 (${err.message})。<br>请检查 MONGO_URL 环境变量是否配置正确。</div>`;
             }
         }
 
