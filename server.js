@@ -66,10 +66,13 @@ app.get('/api/sounds', async (req, res) => {
 app.post('/api/sounds', async (req, res) => {
     try {
         const { name, url, color } = req.body;
-        // 简单补丁：确保 URL 带 http
+        // 强制保存为 HTTPS
         let safeUrl = url;
-        if (safeUrl && !safeUrl.startsWith('http')) {
-            safeUrl = `http://${safeUrl}`;
+        if (safeUrl && safeUrl.startsWith('http://')) {
+            safeUrl = safeUrl.replace('http://', 'https://');
+        } else if (safeUrl && !safeUrl.startsWith('http')) {
+             // 如果没带协议头，默认加上 https
+            safeUrl = `https://${safeUrl}`;
         }
         
         const newSound = new Sound({ name, url: safeUrl, color });
