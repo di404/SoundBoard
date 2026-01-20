@@ -35,33 +35,99 @@ const accessKey = process.env.QINIU_ACCESS_KEY;
 const secretKey = process.env.QINIU_SECRET_KEY;
 const bucket = process.env.QINIU_BUCKET;
 const domain = process.env.QINIU_DOMAIN;
+const adminPassword = process.env.ADMIN_PASSWORD || "admin"; // 默认密码 admin
 
-// API: 获取所有音效
+// --- 鉴权中间件 ---
+const authMiddleware = (req, res, next) => {
+    const password = req.headers['x-admin-password'];
+    if (password !== adminPassword) {
+        return res.status(403).json({ error: 'Unauthorized: Incorrect password' });
+    }
+    next();
+};
+
+// --- API ---
+
+// API: 获取所有音效 (公开)
 app.get('/api/sounds', async (req, res) => {
-    // 检查数据库连接状态 (1 = connected)
+    // ... (保持原样)
     if (mongoose.connection.readyState !== 1) {
-        console.error("MongoDB not connected. Current state:", mongoose.connection.readyState);
         return res.status(503).json({ error: 'Database not connected' });
     }
-
     try {
         const sounds = await Sound.find().sort({ createdAt: -1 });
         res.json(sounds);
     } catch (err) {
-        console.error("Error fetching sounds:", err);
-        res.status(500).json({ error: 'Failed to fetch sounds', details: err.message });
+        res.status(500).json({ error: 'Failed to fetch sounds' });
     }
 });
 
-// API: 保存新音效
+// API: 保存新音效 (公开，暂不限制)
 app.post('/api/sounds', async (req, res) => {
     try {
         const { name, url, color } = req.body;
-        const newSound = new Sound({ name, url, color });
+        // 简单补丁：确保 URL 带 http
+        let safeUrl = url;
+        if (safeUrl && !safeUrl.startsWith('http')) {
+            safeUrl = `http://${safeUrl}`;
+        }
+        
+        const newSound = new Sound({ name, url: safeUrl, color });
         await newSound.save();
         res.json(newSound);
     } catch (err) {
         res.status(500).json({ error: 'Failed to save sound' });
+    }
+});
+
+// API: 修改音效 (需要密码)
+app.put('/api/sounds/:id', authMiddleware, async (req, res) => {
+    try {
+        const { name, color } = req.body;
+        const updatedSound = await Sound.findByIdAndUpdate(
+            req.params.id, 
+            { name, color },
+            { new: true } // 返回修改后的对象
+        );
+        res.json(updatedSound);
+    } catch (err) {
+        res.status(500).json({ error: 'Update failed' });
+    }
+});
+
+// API: 删除音效 (需要密码)
+app.delete('/api/sounds/:id', authMiddleware, async (req, res) => {
+    try {
+        const sound = await Sound.findById(req.params.id);
+        if (!sound) return res.status(404).json({ error: 'Sound not found' });
+
+        // 1. 从七牛云删除文件
+        if (accessKey && secretKey && bucket) {
+            const mac = new qiniu.auth.digest.Mac(accessKey, secretKey);
+            const config = new qiniu.conf.Config();
+            const bucketManager = new qiniu.rs.BucketManager(mac, config);
+            
+            // 从 URL 提取 key (文件名)
+            // 假设 URL 是 http://domain.com/filename
+            const key = sound.url.split('/').pop();
+            
+            bucketManager.delete(bucket, key, function(err, respBody, respInfo) {
+                if (err) {
+                    console.error("Qiniu delete error:", err);
+                    // 不阻断流程，继续删除数据库记录
+                } else {
+                    console.log("Qiniu file deleted:", key);
+                }
+            });
+        }
+
+        // 2. 从数据库删除
+        await Sound.findByIdAndDelete(req.params.id);
+        res.json({ success: true });
+
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Delete failed' });
     }
 });
 
