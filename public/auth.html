@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>登录 - Instant Fun</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .auth-container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 2rem;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 500;
+        }
+        input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        .btn {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+        .btn:active {
+            transform: translateY(0);
+        }
+        .switch-mode {
+            text-align: center;
+            margin-top: 20px;
+            color: #666;
+        }
+        .switch-mode a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+        }
+        .switch-mode a:hover {
+            text-decoration: underline;
+        }
+        .error {
+            background: #ffebee;
+            color: #c62828;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="auth-container">
+        <h1 id="title">登录</h1>
+        <div id="error" class="error"></div>
+        <form id="authForm">
+            <div class="form-group" id="usernameGroup" style="display: none;">
+                <label>用户名</label>
+                <input type="text" id="username" placeholder="请输入用户名">
+            </div>
+            <div class="form-group">
+                <label>邮箱</label>
+                <input type="email" id="email" placeholder="请输入邮箱" required>
+            </div>
+            <div class="form-group">
+                <label>密码</label>
+                <input type="password" id="password" placeholder="请输入密码" required>
+            </div>
+            <button type="submit" class="btn" id="submitBtn">登录</button>
+        </form>
+        <div class="switch-mode">
+            <span id="switchText">还没有账号？</span>
+            <a href="#" id="switchLink">立即注册</a>
+        </div>
+    </div>
+
+    <script>
+        let isRegister = false;
+
+        const title = document.getElementById('title');
+        const usernameGroup = document.getElementById('usernameGroup');
+        const submitBtn = document.getElementById('submitBtn');
+        const switchText = document.getElementById('switchText');
+        const switchLink = document.getElementById('switchLink');
+        const errorDiv = document.getElementById('error');
+
+        document.getElementById('switchLink').addEventListener('click', (e) => {
+            e.preventDefault();
+            isRegister = !isRegister;
+            updateUI();
+        });
+
+        function updateUI() {
+            if (isRegister) {
+                title.textContent = '注册';
+                usernameGroup.style.display = 'block';
+                submitBtn.textContent = '注册';
+                switchText.textContent = '已有账号？';
+                switchLink.textContent = '立即登录';
+            } else {
+                title.textContent = '登录';
+                usernameGroup.style.display = 'none';
+                submitBtn.textContent = '登录';
+                switchText.textContent = '还没有账号？';
+                switchLink.textContent = '立即注册';
+            }
+        }
+
+        function showError(message) {
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+        }
+
+        document.getElementById('authForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const username = document.getElementById('username').value;
+
+            const url = isRegister ? '/api/auth/register' : '/api/auth/login';
+            const body = isRegister ? { username, email, password } : { email, password };
+
+            try {
+                const res = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+
+                const data = await res.json();
+
+                if (res.ok) {
+                    localStorage.setItem('token', data.token);
+                    localStorage.setItem('user', JSON.stringify(data.user));
+                    window.location.href = '/';
+                } else {
+                    showError(data.error || '操作失败');
+                }
+            } catch (err) {
+                showError('网络错误，请稍后重试');
+            }
+        });
+    </script>
+</body>
+</html>
