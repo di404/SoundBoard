@@ -7,11 +7,18 @@ const cors = require('cors');
 const http = require('http');
 require('dotenv').config();
 
+const mongoose = require('mongoose');
 const { User, Sound, Collection, Favorite } = require('./models');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-this';
+
+// MongoDB Connection
+const MONGO_URL = process.env.MONGO_URL || 'mongodb://localhost:27017/instant-fun';
+mongoose.connect(MONGO_URL)
+    .then(() => console.log('Connected to MongoDB'))
+    .catch(err => console.error('MongoDB connection error:', err));
 
 app.use(cors());
 app.use(express.json());

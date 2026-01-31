@@ -58,11 +58,78 @@
             color: var(--text-color);
         }
 
+        /* User Info Section */
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 16px;
+            background: var(--card-bg);
+            border-radius: 25px;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+
+        .user-info .avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        .user-info .username {
+            font-weight: 600;
+        }
+
+        .user-info .logout-btn {
+            background: transparent;
+            border: none;
+            color: #888;
+            cursor: pointer;
+            font-size: 1.1rem;
+            transition: color 0.2s;
+            padding: 4px;
+        }
+
+        .user-info .logout-btn:hover {
+            color: var(--accent-color);
+        }
+
+        .login-btn {
+            padding: 8px 20px;
+            border-radius: 20px;
+            border: 1px solid var(--accent-color);
+            color: var(--accent-color);
+            background: transparent;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+        }
+
+        .login-btn:hover {
+            background: var(--accent-color);
+            color: white;
+        }
+
+        .header-controls {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            width: 100%;
+            max-width: 600px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
         .controls {
             display: flex;
             gap: 10px;
-            width: 100%;
-            max-width: 600px;
+            flex-grow: 1;
             justify-content: center;
         }
 
@@ -114,6 +181,37 @@
 
         .stop-btn { background-color: var(--accent-color); }
         .upload-btn { background-color: var(--success-color); }
+        .favorites-btn { background-color: #e91e63; }
+        .collections-btn { background-color: #9c27b0; }
+
+        /* Tab Navigation */
+        .tab-nav {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            justify-content: center;
+        }
+
+        .tab-btn {
+            padding: 10px 25px;
+            border-radius: 20px;
+            border: none;
+            background: var(--input-bg);
+            color: #888;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .tab-btn:hover {
+            background: #3d3d3d;
+            color: white;
+        }
+
+        .tab-btn.active {
+            background: var(--accent-color);
+            color: white;
+        }
 
         /* Grid Styles */
         main {
@@ -148,7 +246,6 @@
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
             user-select: none;
             -webkit-tap-highlight-color: transparent;
-            /* Changed: use css var for color */
             background-color: var(--btn-color);
             z-index: 1;
         }
@@ -159,11 +256,6 @@
             position: absolute;
             top: 0; left: 0; right: 0; bottom: 0;
             border-radius: inherit;
-            /* 
-               Fix: explicit stops for clean cut 
-               0% -> var(--progress): Transparent (Reveals Button Color)
-               var(--progress) -> 100%: Dark Overlay (Hides Button Color)
-            */
             background: conic-gradient(
                 transparent 0%, 
                 transparent var(--progress, 100%), 
@@ -184,7 +276,6 @@
             filter: brightness(0.9);
         }
 
-        /* Ensure Text/Icon is above overlay */
         .sound-btn i, .sound-btn span {
             position: relative;
             z-index: 2; 
@@ -206,6 +297,58 @@
             width: 100%;
             text-shadow: 0 1px 3px rgba(0,0,0,0.4);
             pointer-events: none;
+        }
+
+        /* Favorite Button */
+        .favorite-btn {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            border: none;
+            background: rgba(0,0,0,0.5);
+            color: #888;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 3;
+            transition: all 0.2s;
+        }
+
+        .favorite-btn:hover {
+            background: rgba(255,255,255,0.2);
+            transform: scale(1.1);
+        }
+
+        .favorite-btn.active {
+            color: #e91e63;
+        }
+
+        /* Collection Add Button */
+        .add-to-collection-btn {
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            border: none;
+            background: rgba(0,0,0,0.5);
+            color: #888;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 3;
+            transition: all 0.2s;
+        }
+
+        .add-to-collection-btn:hover {
+            background: rgba(255,255,255,0.2);
+            transform: scale(1.1);
         }
 
         .no-results {
@@ -245,19 +388,29 @@
             width: 90%;
             max-width: 400px;
             box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal.large {
+            max-width: 600px;
         }
 
         .modal h2 { margin-bottom: 20px; color: white; }
         
         .form-group { margin-bottom: 15px; }
         .form-group label { display: block; margin-bottom: 5px; color: #ccc; }
-        .form-group input {
+        .form-group input, .form-group textarea {
             width: 100%;
             padding: 10px;
             border-radius: 5px;
             border: 1px solid #333;
             background: var(--input-bg);
             color: white;
+        }
+        .form-group textarea {
+            resize: vertical;
+            min-height: 80px;
         }
         
         .modal-actions {
@@ -276,6 +429,129 @@
             color: #ccc;
         }
 
+        /* Collection List */
+        .collection-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .collection-card {
+            background: var(--input-bg);
+            border-radius: 12px;
+            padding: 20px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            position: relative;
+        }
+
+        .collection-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+
+        .collection-card h3 {
+            margin-bottom: 10px;
+            color: white;
+            font-size: 1.1rem;
+        }
+
+        .collection-card p {
+            color: #888;
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+        }
+
+        .collection-card .count {
+            color: #666;
+            font-size: 0.85rem;
+        }
+
+        .collection-card .delete-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            border: none;
+            background: rgba(255,82,82,0.2);
+            color: var(--accent-color);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .collection-card .delete-btn:hover {
+            background: var(--accent-color);
+            color: white;
+        }
+
+        /* Collection Selector */
+        .collection-selector {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .collection-option {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px;
+            background: var(--input-bg);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .collection-option:hover {
+            background: #3d3d3d;
+        }
+
+        .collection-option.in-collection {
+            background: rgba(46, 204, 113, 0.2);
+            border: 1px solid var(--success-color);
+        }
+
+        .collection-option .name {
+            font-weight: 600;
+        }
+
+        .collection-option .status {
+            font-size: 0.85rem;
+            color: #888;
+        }
+
+        /* Toast Notification */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: var(--card-bg);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 25px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            z-index: 2000;
+            transition: transform 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .toast.success i { color: var(--success-color); }
+        .toast.error i { color: var(--accent-color); }
+
         /* Footer */
         footer {
             padding: 20px;
@@ -292,6 +568,8 @@
             .sound-btn { width: 100%; height: 120px; }
             h1 { font-size: 1.5rem; }
             header { padding: 15px; }
+            .header-controls { flex-direction: column; }
+            .controls { width: 100%; }
         }
     </style>
 </head>
@@ -299,17 +577,31 @@
 
     <header>
         <h1>Instant Fun</h1>
-        <div class="controls">
-            <div class="search-container">
-                <i class="fas fa-search"></i>
-                <input type="text" id="searchInput" placeholder="搜索音效...">
+        
+        <div class="header-controls">
+            <!-- User Info Section -->
+            <div id="userInfoSection">
+                <!-- Will be populated by JavaScript -->
             </div>
-            <button class="btn upload-btn" id="openUploadBtn">
-                <i class="fas fa-cloud-upload-alt"></i> 上传
-            </button>
-            <button class="btn stop-btn" id="stopAllBtn">
-                <i class="fas fa-stop"></i> 停止
-            </button>
+            
+            <div class="controls">
+                <div class="search-container">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="searchInput" placeholder="搜索音效...">
+                </div>
+                <button class="btn upload-btn" id="openUploadBtn">
+                    <i class="fas fa-cloud-upload-alt"></i> 上传
+                </button>
+                <button class="btn favorites-btn" id="openFavoritesBtn">
+                    <i class="fas fa-heart"></i> 收藏
+                </button>
+                <button class="btn collections-btn" id="openCollectionsBtn">
+                    <i class="fas fa-folder"></i> 合集
+                </button>
+                <button class="btn stop-btn" id="stopAllBtn">
+                    <i class="fas fa-stop"></i> 停止
+                </button>
+            </div>
         </div>
     </header>
 
@@ -339,21 +631,81 @@
         </div>
     </div>
 
+    <!-- Create Collection Modal -->
+    <div class="modal-overlay" id="createCollectionModal">
+        <div class="modal">
+            <h2>创建新合集</h2>
+            <div class="form-group">
+                <label>合集名称</label>
+                <input type="text" id="collectionName" placeholder="例如: 游戏音效">
+            </div>
+            <div class="form-group">
+                <label>描述（可选）</label>
+                <textarea id="collectionDesc" placeholder="描述这个合集..."></textarea>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-cancel" id="cancelCreateCollection">取消</button>
+                <button class="btn btn-submit" id="confirmCreateCollection">创建</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add to Collection Modal -->
+    <div class="modal-overlay" id="addToCollectionModal">
+        <div class="modal large">
+            <h2>添加到合集</h2>
+            <div id="collectionSelector" class="collection-selector">
+                <!-- Collection options injected here -->
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-cancel" id="cancelAddToCollection">关闭</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Collections Modal -->
+    <div class="modal-overlay" id="collectionsModal">
+        <div class="modal large">
+            <h2>我的合集</h2>
+            <div id="collectionsList" class="collection-list">
+                <!-- Collections injected here -->
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-cancel" id="cancelCollections">关闭</button>
+                <button class="btn btn-submit" id="openCreateCollection">
+                    <i class="fas fa-plus"></i> 新建合集
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast">
+        <i class="fas fa-check-circle"></i>
+        <span id="toastMessage">操作成功</span>
+    </div>
+
     <footer>
         <p>Built for Instant Fun • Pure HTML/CSS/JS + Node.js</p>
     </footer>
 
     <script>
         // State
-        let soundList = []; // Now loaded from DB
+        let soundList = [];
+        let currentUser = null;
+        let currentToken = null;
+        let favorites = new Set();
+        let collections = [];
         const activeAudios = []; 
         const audioMap = new Map();
-        const rafMap = new Map(); // Store RAF IDs to cancel them
-        
+        const rafMap = new Map();
+        let selectedSoundId = null;
+
         // DOM Elements
         const grid = document.getElementById('soundGrid');
         const searchInput = document.getElementById('searchInput');
         const stopAllBtn = document.getElementById('stopAllBtn');
+        const userInfoSection = document.getElementById('userInfoSection');
         
         // Modal Elements
         const uploadModal = document.getElementById('uploadModal');
@@ -364,13 +716,111 @@
         const uploadFileInput = document.getElementById('uploadFile');
         const uploadStatus = document.getElementById('uploadStatus');
 
-        // --- Core Functions ---
+        // Collection Modals
+        const createCollectionModal = document.getElementById('createCollectionModal');
+        const openCreateCollectionBtn = document.getElementById('openCreateCollection');
+        const cancelCreateCollectionBtn = document.getElementById('cancelCreateCollection');
+        const confirmCreateCollectionBtn = document.getElementById('confirmCreateCollection');
+        const collectionNameInput = document.getElementById('collectionName');
+        const collectionDescInput = document.getElementById('collectionDesc');
 
-        // NEW: Fetch all sounds from DB
+        const addToCollectionModal = document.getElementById('addToCollectionModal');
+        const cancelAddToCollectionBtn = document.getElementById('cancelAddToCollection');
+        const collectionSelector = document.getElementById('collectionSelector');
+
+        const collectionsModal = document.getElementById('collectionsModal');
+        const openCollectionsBtn = document.getElementById('openCollectionsBtn');
+        const cancelCollectionsBtn = document.getElementById('cancelCollections');
+        const collectionsList = document.getElementById('collectionsList');
+
+        const openFavoritesBtn = document.getElementById('openFavoritesBtn');
+
+        // Toast Element
+        const toast = document.getElementById('toast');
+        const toastMessage = document.getElementById('toastMessage');
+
+        // --- Helper Functions ---
+
+        function showToast(message, type = 'success') {
+            toastMessage.textContent = message;
+            toast.className = `toast ${type} show`;
+            const icon = toast.querySelector('i');
+            icon.className = type === 'success' ? 'fas fa-check-circle' : 'fas fa-exclamation-circle';
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        function getAuthHeaders() {
+            const token = localStorage.getItem('token');
+            if (token) {
+                return { 'Authorization': `Bearer ${token}` };
+            }
+            return {};
+        }
+
+        function checkAuth() {
+            const token = localStorage.getItem('token');
+            const userStr = localStorage.getItem('user');
+            if (token && userStr) {
+                try {
+                    currentUser = JSON.parse(userStr);
+                    currentToken = token;
+                    renderUserInfo();
+                    return true;
+                } catch (e) {
+                    console.error('Failed to parse user data:', e);
+                    localStorage.removeItem('token');
+                    localStorage.removeItem('user');
+                }
+            }
+            renderUserInfo();
+            return false;
+        }
+
+        function renderUserInfo() {
+            if (currentUser) {
+                userInfoSection.innerHTML = `
+                    <div class="user-info">
+                        <div class="avatar">${currentUser.username.charAt(0).toUpperCase()}</div>
+                        <span class="username">${currentUser.username}</span>
+                        <button class="logout-btn" id="logoutBtn" title="退出登录">
+                            <i class="fas fa-sign-out-alt"></i>
+                        </button>
+                    </div>
+                `;
+                document.getElementById('logoutBtn').addEventListener('click', handleLogout);
+                openUploadBtn.disabled = false;
+            } else {
+                userInfoSection.innerHTML = `
+                    <a href="/auth.html" class="login-btn">
+                        <i class="fas fa-user"></i> 登录
+                    </a>
+                `;
+                openUploadBtn.disabled = true;
+                openUploadBtn.title = '请先登录';
+            }
+        }
+
+        async function handleLogout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            currentUser = null;
+            currentToken = null;
+            favorites.clear();
+            collections = [];
+            renderUserInfo();
+            showToast('已退出登录');
+            await loadSounds();
+        }
+
+        // --- API Functions ---
+
         async function loadSounds() {
             try {
                 grid.innerHTML = '<div class="no-results">正在加载音效...</div>';
-                const response = await fetch('/api/sounds');
+                const headers = getAuthHeaders();
+                const response = await fetch('/api/sounds', { headers });
                 
                 if (!response.ok) {
                     throw new Error(`Server Error: ${response.status}`);
@@ -378,9 +828,16 @@
 
                 const data = await response.json();
                 
-                // Safety check: ensure data is an array
                 if (Array.isArray(data)) {
                     soundList = data;
+                    // Update favorites from response
+                    favorites.clear();
+                    data.forEach(sound => {
+                        if (sound.isFavorite) {
+                            favorites.add(sound._id.toString());
+                        }
+                    });
+                    
                     if (soundList.length === 0) {
                         grid.innerHTML = '<div class="no-results">还没有音效，快去上传一个吧！</div>';
                     } else {
@@ -390,12 +847,266 @@
                     console.error("Received invalid data:", data);
                     grid.innerHTML = '<div class="no-results">数据格式错误，请检查控制台</div>';
                 }
-
             } catch (err) {
                 console.error("Failed to load sounds:", err);
-                grid.innerHTML = `<div class="no-results">加载失败 (${err.message})。<br>请检查 MONGO_URL 环境变量是否配置正确。</div>`;
+                grid.innerHTML = `<div class="no-results">加载失败 (${err.message})</div>`;
             }
         }
+
+        async function loadCollections() {
+            if (!currentUser) return;
+            try {
+                const headers = getAuthHeaders();
+                const response = await fetch('/api/collections', { headers });
+                if (response.ok) {
+                    collections = await response.json();
+                }
+            } catch (err) {
+                console.error("Failed to load collections:", err);
+            }
+        }
+
+        async function toggleFavorite(soundId) {
+            if (!currentUser) {
+                showToast('请先登录', 'error');
+                return;
+            }
+
+            const isFav = favorites.has(soundId);
+            const headers = getAuthHeaders();
+
+            try {
+                const url = isFav ? `/api/favorites/${soundId}` : '/api/favorites';
+                const method = isFav ? 'DELETE' : 'POST';
+                
+                const response = await fetch(url, {
+                    method,
+                    headers: {
+                        ...headers,
+                        'Content-Type': 'application/json'
+                    },
+                    body: isFav ? undefined : JSON.stringify({ soundId })
+                });
+
+                if (response.ok) {
+                    if (isFav) {
+                        favorites.delete(soundId);
+                        showToast('已取消收藏');
+                    } else {
+                        favorites.add(soundId);
+                        showToast('已收藏');
+                    }
+                    renderButtons(searchInput.value);
+                } else {
+                    const data = await response.json();
+                    showToast(data.error || '操作失败', 'error');
+                }
+            } catch (err) {
+                console.error('Favorite error:', err);
+                showToast('网络错误', 'error');
+            }
+        }
+
+        async function showFavorites() {
+            if (!currentUser) {
+                showToast('请先登录', 'error');
+                return;
+            }
+
+            try {
+                const headers = getAuthHeaders();
+                const response = await fetch('/api/favorites', { headers });
+                if (response.ok) {
+                    const favSounds = await response.json();
+                    if (favSounds.length === 0) {
+                        grid.innerHTML = '<div class="no-results">还没有收藏任何音效</div>';
+                    } else {
+                        soundList = favSounds;
+                        renderButtons();
+                    }
+                } else {
+                    showToast('获取收藏失败', 'error');
+                }
+            } catch (err) {
+                console.error('Load favorites error:', err);
+                showToast('网络错误', 'error');
+            }
+        }
+
+        async function createCollection() {
+            if (!currentUser) {
+                showToast('请先登录', 'error');
+                return;
+            }
+
+            const name = collectionNameInput.value.trim();
+            const description = collectionDescInput.value.trim();
+
+            if (!name) {
+                showToast('请输入合集名称', 'error');
+                return;
+            }
+
+            try {
+                const headers = getAuthHeaders();
+                const response = await fetch('/api/collections', {
+                    method: 'POST',
+                    headers: {
+                        ...headers,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ name, description, isPublic: false })
+                });
+
+                if (response.ok) {
+                    const newCollection = await response.json();
+                    collections.unshift(newCollection);
+                    renderCollectionsList();
+                    closeModal(createCollectionModal);
+                    showToast('合集创建成功');
+                    collectionNameInput.value = '';
+                    collectionDescInput.value = '';
+                } else {
+                    const data = await response.json();
+                    showToast(data.error || '创建失败', 'error');
+                }
+            } catch (err) {
+                console.error('Create collection error:', err);
+                showToast('网络错误', 'error');
+            }
+        }
+
+        async function deleteCollection(collectionId) {
+            if (!currentUser) return;
+
+            if (!confirm('确定要删除这个合集吗？')) return;
+
+            try {
+                const headers = getAuthHeaders();
+                const response = await fetch(`/api/collections/${collectionId}`, {
+                    method: 'DELETE',
+                    headers
+                });
+
+                if (response.ok) {
+                    collections = collections.filter(c => c._id.toString() !== collectionId);
+                    renderCollectionsList();
+                    showToast('合集已删除');
+                } else {
+                    showToast('删除失败', 'error');
+                }
+            } catch (err) {
+                console.error('Delete collection error:', err);
+                showToast('网络错误', 'error');
+            }
+        }
+
+        async function addToCollection(collectionId) {
+            if (!currentUser || !selectedSoundId) return;
+
+            try {
+                const headers = getAuthHeaders();
+                const response = await fetch(`/api/collections/${collectionId}/sounds`, {
+                    method: 'POST',
+                    headers: {
+                        ...headers,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ soundId: selectedSoundId })
+                });
+
+                if (response.ok) {
+                    showToast('已添加到合集');
+                    await loadCollections();
+                    showCollectionSelector();
+                } else {
+                    const data = await response.json();
+                    showToast(data.error || '添加失败', 'error');
+                }
+            } catch (err) {
+                console.error('Add to collection error:', err);
+                showToast('网络错误', 'error');
+            }
+        }
+
+        async function removeFromCollection(collectionId, soundId) {
+            if (!currentUser) return;
+
+            try {
+                const headers = getAuthHeaders();
+                const response = await fetch(`/api/collections/${collectionId}/sounds/${soundId}`, {
+                    method: 'DELETE',
+                    headers
+                });
+
+                if (response.ok) {
+                    showToast('已从合集移除');
+                    await loadCollections();
+                    showCollectionSelector();
+                } else {
+                    showToast('移除失败', 'error');
+                }
+            } catch (err) {
+                console.error('Remove from collection error:', err);
+                showToast('网络错误', 'error');
+            }
+        }
+
+        function showCollectionSelector() {
+            if (collections.length === 0) {
+                collectionSelector.innerHTML = '<div class="no-results">还没有合集，先创建一个吧！</div>';
+                return;
+            }
+
+            collectionSelector.innerHTML = collections.map(collection => {
+                const isInCollection = collection.sounds.some(s => s._id.toString() === selectedSoundId);
+                return `
+                    <div class="collection-option ${isInCollection ? 'in-collection' : ''}" 
+                         data-collection-id="${collection._id}">
+                        <span class="name">${collection.name}</span>
+                        <span class="status">
+                            ${isInCollection 
+                                ? `<button class="btn" style="background: var(--accent-color); padding: 5px 10px; font-size: 0.8rem;" 
+                                          onclick="event.stopPropagation(); removeFromCollection('${collection._id}', '${selectedSoundId}')">移除</button>`
+                                : `<button class="btn" style="background: var(--success-color); padding: 5px 10px; font-size: 0.8rem;" 
+                                          onclick="event.stopPropagation(); addToCollection('${collection._id}')">添加</button>`
+                            }
+                        </span>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderCollectionsList() {
+            if (collections.length === 0) {
+                collectionsList.innerHTML = '<div class="no-results">还没有合集，点击"新建合集"开始创建吧！</div>';
+                return;
+            }
+
+            collectionsList.innerHTML = collections.map(collection => `
+                <div class="collection-card" onclick="playCollection('${collection._id}')">
+                    <button class="delete-btn" onclick="event.stopPropagation(); deleteCollection('${collection._id}')" title="删除合集">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                    <h3>${collection.name}</h3>
+                    <p>${collection.description || '暂无描述'}</p>
+                    <p class="count"><i class="fas fa-music"></i> ${collection.sounds.length} 个音效</p>
+                </div>
+            `).join('');
+        }
+
+        async function playCollection(collectionId) {
+            const collection = collections.find(c => c._id.toString() === collectionId);
+            if (collection && collection.sounds.length > 0) {
+                soundList = collection.sounds;
+                closeModal(collectionsModal);
+                renderButtons();
+            } else {
+                showToast('这个合集是空的', 'error');
+            }
+        }
+
+        // --- UI Rendering ---
 
         function renderButtons(filterText = '') {
             grid.innerHTML = '';
@@ -409,12 +1120,11 @@
             }
 
             filteredSounds.forEach(sound => {
+                const soundId = sound._id.toString();
                 const btn = document.createElement('button');
                 btn.className = 'sound-btn';
-                // Use CSS Variable for background color
                 btn.style.setProperty('--btn-color', sound.color);
-                btn.dataset.id = sound._id || sound.id; // Use MongoDB _id
-                btn.onclick = () => playSound(sound);
+                btn.dataset.id = sound._id || sound.id;
                 
                 const icon = document.createElement('i');
                 icon.className = `fas ${sound.icon || 'fa-music'}`;
@@ -423,8 +1133,34 @@
                 span.className = 'sound-name';
                 span.innerText = sound.name;
 
+                // Add to collection button
+                if (currentUser) {
+                    const addToCollectionBtn = document.createElement('button');
+                    addToCollectionBtn.className = 'add-to-collection-btn';
+                    addToCollectionBtn.innerHTML = '<i class="fas fa-folder-plus"></i>';
+                    addToCollectionBtn.onclick = (e) => {
+                        e.stopPropagation();
+                        selectedSoundId = soundId;
+                        showCollectionSelector();
+                        openModal(addToCollectionModal);
+                    };
+                    btn.appendChild(addToCollectionBtn);
+                }
+
+                // Favorite button
+                const favoriteBtn = document.createElement('button');
+                favoriteBtn.className = `favorite-btn ${favorites.has(soundId) ? 'active' : ''}`;
+                favoriteBtn.innerHTML = '<i class="fas fa-heart"></i>';
+                favoriteBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    toggleFavorite(soundId);
+                };
+                btn.appendChild(favoriteBtn);
+
                 btn.appendChild(icon);
                 btn.appendChild(span);
+                
+                btn.onclick = () => playSound(sound);
                 grid.appendChild(btn);
             });
         }
@@ -448,7 +1184,6 @@
             if (btn) {
                 btn.classList.add('playing');
                 setTimeout(() => btn.classList.remove('playing'), 150);
-                // Reset progress immediately to 0 (Dark)
                 btn.style.setProperty('--progress', '0%');
             }
 
@@ -464,14 +1199,11 @@
 
             audio.play().catch(e => {
                 console.error("Playback failed:", e);
-                // Reset visual on error
                 if(btn) btn.style.setProperty('--progress', '100%');
             });
 
-            // Progress Loop
             const updateProgress = () => {
                 if (audio.paused || audio.ended) {
-                    // Stop loop if paused/ended, but wait for onended to reset visual
                     return; 
                 }
 
@@ -481,21 +1213,15 @@
                 if (duration > 0 && isFinite(duration)) {
                     const percent = (current / duration) * 100;
                     if (btn) btn.style.setProperty('--progress', `${percent}%`);
-                } else {
-                    // Fallback for infinite duration (e.g. streaming issues)
-                    // We just keep it at 0% or maybe pulse it? For now, keep 0 to show "loading/playing"
-                    // console.log("Waiting for duration...", duration);
                 }
 
                 rafMap.set(soundId, requestAnimationFrame(updateProgress));
             };
 
-            // Start loop when audio starts playing or metadata is loaded
             audio.addEventListener('playing', () => {
                 rafMap.set(soundId, requestAnimationFrame(updateProgress));
             });
             
-            // Also trigger once metadata is loaded to ensure duration is ready
             audio.addEventListener('loadedmetadata', () => {
                  // console.log("Duration loaded:", audio.duration);
             });
@@ -505,15 +1231,12 @@
                 if (index > -1) activeAudios.splice(index, 1);
                 if (audioMap.get(soundId) === audio) audioMap.delete(soundId);
                 
-                // Reset Visuals to 100% (Full Color)
                 if (rafMap.has(soundId)) cancelAnimationFrame(rafMap.get(soundId));
                 if (btn) btn.style.setProperty('--progress', '100%');
             };
 
-            // Handle manual pause or other stops
             audio.onpause = () => {
                 if (rafMap.has(soundId)) cancelAnimationFrame(rafMap.get(soundId));
-                // We don't reset progress here necessarily, but for "Stop All" we do
             };
         }
 
@@ -525,7 +1248,6 @@
             activeAudios.length = 0;
             audioMap.clear();
             
-            // Cancel all animations and reset buttons
             rafMap.forEach(rafId => cancelAnimationFrame(rafId));
             rafMap.clear();
             
@@ -536,15 +1258,12 @@
 
         // --- Upload Logic ---
 
-        function openModal() {
-            uploadModal.classList.add('active');
-            uploadStatus.innerText = "";
-            uploadNameInput.value = "";
-            uploadFileInput.value = "";
+        function openModal(modal) {
+            modal.classList.add('active');
         }
 
-        function closeModal() {
-            uploadModal.classList.remove('active');
+        function closeModal(modal) {
+            modal.classList.remove('active');
         }
 
         async function handleUpload() {
@@ -556,17 +1275,21 @@
                 return;
             }
 
+            if (!currentUser) {
+                uploadStatus.innerText = "❌ 请先登录";
+                return;
+            }
+
             uploadStatus.innerText = "⏳ 正在获取上传凭证...";
 
             try {
-                // 1. 获取 Token
-                const response = await fetch('/api/upload-token');
+                const headers = getAuthHeaders();
+                const response = await fetch('/api/upload-token', { headers });
                 if (!response.ok) throw new Error("无法连接到服务器");
                 const data = await response.json();
                 
                 if (!data.token) throw new Error("服务器未配置七牛云 Key");
 
-                // 2. 使用七牛 SDK 上传
                 uploadStatus.innerText = "🚀 正在上传到云端...";
                 const key = `${Date.now()}_${file.name}`;
                 const config = { useCdnDomain: true, region: null };
@@ -585,11 +1308,13 @@
                     complete: async (res) => {
                         const audioUrl = `${data.domain}/${res.key}`;
                         
-                        // 3. NEW: Save to MongoDB
                         uploadStatus.innerText = "💾 正在保存到数据库...";
                         const saveResponse = await fetch('/api/sounds', {
                             method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
+                            headers: {
+                                ...headers,
+                                'Content-Type': 'application/json'
+                            },
                             body: JSON.stringify({
                                 name: name,
                                 url: audioUrl,
@@ -602,7 +1327,11 @@
                             soundList.unshift(savedSound);
                             renderButtons(searchInput.value);
                             uploadStatus.innerText = "✅ 上传并保存成功!";
-                            setTimeout(closeModal, 1000);
+                            showToast('上传成功!');
+                            setTimeout(() => {
+                                closeModal(uploadModal);
+                                uploadStatus.innerText = "";
+                            }, 1000);
                         } else {
                             throw new Error("保存到数据库失败");
                         }
@@ -623,15 +1352,61 @@
         // Event Listeners
         searchInput.addEventListener('input', (e) => renderButtons(e.target.value));
         stopAllBtn.addEventListener('click', stopAllSounds);
-        openUploadBtn.addEventListener('click', openModal);
-        cancelUploadBtn.addEventListener('click', closeModal);
+        
+        // Upload events
+        openUploadBtn.addEventListener('click', () => {
+            if (!currentUser) {
+                showToast('请先登录', 'error');
+                return;
+            }
+            openModal(uploadModal);
+        });
+        cancelUploadBtn.addEventListener('click', () => closeModal(uploadModal));
         confirmUploadBtn.addEventListener('click', handleUpload);
-
-        uploadModal.addEventListener('click', (e) => {
-            if (e.target === uploadModal) closeModal();
+        
+        // Favorites events
+        openFavoritesBtn.addEventListener('click', () => {
+            if (!currentUser) {
+                showToast('请先登录', 'error');
+                return;
+            }
+            showFavorites();
         });
 
-        // Initial Load
+        // Collections events
+        openCollectionsBtn.addEventListener('click', async () => {
+            if (!currentUser) {
+                showToast('请先登录', 'error');
+                return;
+            }
+            await loadCollections();
+            renderCollectionsList();
+            openModal(collectionsModal);
+        });
+        
+        cancelCollectionsBtn.addEventListener('click', () => closeModal(collectionsModal));
+        openCreateCollectionBtn.addEventListener('click', () => {
+            closeModal(collectionsModal);
+            openModal(createCollectionModal);
+        });
+        
+        cancelCreateCollectionBtn.addEventListener('click', () => closeModal(createCollectionModal));
+        confirmCreateCollectionBtn.addEventListener('click', createCollection);
+        
+        cancelAddToCollectionBtn.addEventListener('click', () => closeModal(addToCollectionModal));
+
+        // Close modal on background click
+        [uploadModal, createCollectionModal, addToCollectionModal, collectionsModal].forEach(modal => {
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) closeModal(modal);
+            });
+        });
+
+        // Initialize
+        checkAuth();
+        if (currentUser) {
+            loadCollections();
+        }
         loadSounds();
     </script>
 </body>
