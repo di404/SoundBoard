@@ -1,6 +1,6 @@
 const express = require('express');
 const qiniu = require('qiniu');
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const path = require('path');
 const cors = require('cors');
@@ -92,7 +92,7 @@ app.post('/api/auth/register', async (req, res) => {
         }
 
         // 哈希密码
-        const hashedPassword = await bcrypt.hash(password, 10);
+        const hashedPassword = bcrypt.hash(password, 10);
 
         const user = new User({ username, email, password: hashedPassword });
         await user.save();
@@ -124,7 +124,7 @@ app.post('/api/auth/login', async (req, res) => {
             return res.status(401).json({ error: '邮箱或密码错误' });
         }
 
-        const isValid = await bcrypt.compare(password, user.password);
+        const isValid = bcrypt.compare(password, user.password);
         if (!isValid) {
             return res.status(401).json({ error: '邮箱或密码错误' });
         }
