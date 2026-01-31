@@ -5,8 +5,11 @@ WORKDIR /src
 # Copy package files first for better caching
 COPY package*.json ./
 
+# Update npm first
+RUN npm update -g npm
+
 # Install dependencies
-RUN npm install
+RUN npm install --legacy-peer-deps
 
 # Copy the rest of the code
 COPY . .
