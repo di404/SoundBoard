@@ -1,13 +1,12 @@
-FROM node:22-alpine
+FROM node:18-alpine
 
 WORKDIR /src
 
 # Copy package files first for better caching
 COPY package*.json ./
 
-# Install dependencies with explicit npm version
-RUN npm install -g npm@11.8.0 && \
-    npm install --legacy-peer-deps --no-audit --no-fund
+# Install dependencies
+RUN npm install --legacy-peer-deps
 
 # Copy the rest of the code
 COPY . .
