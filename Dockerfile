@@ -6,8 +6,7 @@ WORKDIR /src
 COPY package*.json ./
 
 # Install dependencies
-RUN npm install --legacy-peer-deps && \
-    rm -rf node_modules/bcrypt
+RUN npm install --legacy-peer-deps
 
 # Copy the rest of the code
 COPY . .
