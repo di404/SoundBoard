@@ -6,7 +6,7 @@ WORKDIR /src
 COPY package*.json ./
 
 # Install dependencies
-RUN npm ci --production=false
+RUN npm install
 
 # Copy the rest of the code
 COPY . .
