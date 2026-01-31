@@ -6,3 +6,5 @@ npm-debug.log
 README.md
 .DS_Store
 test
+node_modules/bcrypt
+node_modules/.cache
